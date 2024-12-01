@@ -1,9 +1,11 @@
 import os
 from config import Config, ModelConfig
 from constant import BASE_PATH, IS_KAGGLE
+from function_wrappers import versioned_function
 from pipeline import Pipeline
 from spliter import PurgedGroupTimeSeriesSplit
 from utility import default_preprocessor, predict, run_inference_only
+from metrics import r2_metric
 import polars as pl
 
 
@@ -12,6 +14,40 @@ OPTIMIZE_HYPERPARAMS = False  # True: 하이퍼파라미터 최적화 실행
 NICKNAME = "alvinlee9"  # Kaggle nickname
 BASE_DATASET_NAME = "jane-street-model-v3"  # Base dataset name
 DATASET_NAME = f"{BASE_DATASET_NAME}" if IS_KAGGLE else f"{NICKNAME}/{BASE_DATASET_NAME}"
+
+import gc
+import numpy as np
+
+@versioned_function("1.1.0", "Added time-based features and symbol_id processing")
+def default_feature_generator(df: pl.DataFrame) -> pl.DataFrame:
+    """Feature generation with time-based features"""
+    # Add time-based features using polars expressions
+    result = df.with_columns([
+        (2 * np.pi * pl.col('time_id') / 967).sin().alias('feature_sin_time_id'),
+        (2 * np.pi * pl.col('time_id') / 967).cos().alias('feature_cos_time_id'),
+        (2 * np.pi * pl.col('time_id') / 483).sin().alias('feature_sin_time_id_halfday'),
+        (2 * np.pi * pl.col('time_id') / 483).cos().alias('feature_cos_time_id_halfday')
+    ])
+
+    # Fill NA values and rename columns
+    result = (result
+    .fill_null(-1)
+    .rename({
+        'symbol_id': 'feature_symbol_id',
+        'weight': 'feature_weight'
+    }))
+
+    # Select and reorder columns
+    feature_cols = ['feature_symbol_id', 'feature_sin_time_id', 'feature_cos_time_id',
+                    'feature_sin_time_id_halfday', 'feature_cos_time_id_halfday', 'feature_weight']
+    feature_cols.extend([f'feature_0{i}' if i < 10 else f'feature_{i}'
+                         for i in range(79)])
+
+    # Add target column if it exists
+    if 'responder_6' in result.columns:
+        feature_cols.insert(0, 'responder_6')
+
+    return result.select(feature_cols) 
 
 if INFERENCE_ONLY and IS_KAGGLE:
     # Inference only mode
@@ -148,7 +184,6 @@ if IS_KAGGLE:
         )
 
 
-
 # Custom preprocessing and feature generation example
 def my_preprocessor(df: pl.DataFrame) -> pl.DataFrame:
     return df.with_columns([
@@ -171,7 +206,7 @@ def my_feature_generator(df: pl.DataFrame) -> pl.DataFrame:
     ])
 
 # Run custom experiment
-config = Config(...)
+config = Config()
 pipeline = Pipeline(config)
 pipeline.train(
     preprocessor=my_preprocessor,

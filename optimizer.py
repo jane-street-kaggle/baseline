@@ -1,5 +1,12 @@
+from typing import Any, Dict, Tuple
+import optuna
+import numpy as np
+
+from config import Config
+
+
 class OptimizationHandler:
-    def __init__(self, config: "Config", model_class: type):
+    def __init__(self, config: Config, model_class: type):
         self.config = config
         self.model_class = model_class
     

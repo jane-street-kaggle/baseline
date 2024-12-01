@@ -1,3 +1,4 @@
+import gc
 import os
 import pandas as pd
 import polars as pl
@@ -11,11 +12,14 @@ import optuna
 import dill
 import warnings
 import datetime
+import torch
+
+from config import ModelConfig
 warnings.filterwarnings('ignore')
 
 class BaseModel:
     """Base model class for easy extension"""
-    def __init__(self, config: "ModelConfig"):
+    def __init__(self, config: ModelConfig):
         self.config = config
         self.model = None
         self._register_custom_metrics()

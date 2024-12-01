@@ -3,7 +3,7 @@ from typing import Any, Optional
 from config import Config
 from constant import IS_KAGGLE
 
-from kaggle.api.kaggle_api_extended import KaggleApi
+from kaggle.api.kaggle_api_extended import KaggleApi # type: ignore
 
 class KaggleHandler:
     def __init__(self, config: Config):

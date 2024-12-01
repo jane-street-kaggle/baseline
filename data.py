@@ -11,9 +11,9 @@ from constant import BASE_PATH
 class DataHandler:
     def __init__(self, config: Config):
         self.config = config
-        self.date_ranges = None
+        self.date_ranges: Dict[int, Tuple[int, int]] = {} 
         self.test_data: Optional[pl.DataFrame] = None
-        self.features = None
+        self.features: List[str] = [] 
         self.preprocessor = None
         self.feature_generator = None
     
@@ -55,7 +55,7 @@ class DataHandler:
             print(f"Error loading data: {e}")
             return None, None
 
-    def _load_partition_data_by_datarange(self, date_range: Optional[Tuple[int, int]] = None) -> pl.DataFrame:
+    def _load_partition_data_by_datarange(self, date_range: Optional[Tuple[int, int]] = None) -> Optional[pl.DataFrame]:
         """Load and return train data for specified date range"""
         try:
             relevant_partitions = self._get_relevant_partitions(date_range)
@@ -84,10 +84,15 @@ class DataHandler:
             gc.collect()
             
             print(f"Loaded train data shape: {train_data.shape}")
-            print(f"Date range in loaded data: {train_data['date_id'].min()} to {train_data['date_id'].max()}")
-            
+            # Decode date_id if it's a byte string
+            min_date = train_data['date_id'].min()
+            max_date = train_data['date_id'].max()
+            if isinstance(min_date, bytes):
+                min_date = min_date.decode('utf-8')
+            if isinstance(max_date, bytes):
+                max_date = max_date.decode('utf-8')
+            print(f"Date range in loaded data: {min_date} to {max_date}")
             return train_data
-            
         except Exception as e:
             print(f"Error loading train data: {e}")
             return None
@@ -122,6 +127,10 @@ class DataHandler:
                     preprocessor: Optional[Callable] = None,
                     feature_generator: Optional[Callable] = None) -> pl.DataFrame:
         """Prepare data with custom preprocessing and feature generation"""
+        if date_range is None:
+            raise ValueError("Date range is required")
+        if not preprocessor and not feature_generator:
+            raise ValueError("Preprocessor or feature generator is required")
         try:
             self.preprocessor = preprocessor
             self.feature_generator = feature_generator

@@ -102,13 +102,6 @@ class SplitStrategy(ABC):
         plt.tight_layout()
         plt.show()
     
-    @abstractmethod
-    def split(self, data: pl.DataFrame) -> List[Tuple[pl.DataFrame, pl.DataFrame]]:
-        """Split remaining data into train/val sets for cross validation
-        Returns:
-            List of (train, val) DataFrame tuples
-        """
-        pass
 
 class TimeBasedSplit(SplitStrategy):
     def __init__(self, train_ratio: float = 0.75, test_ratio: float = 0.2):

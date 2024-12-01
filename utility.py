@@ -22,7 +22,7 @@ def reduce_memory(df: pl.DataFrame) -> pl.DataFrame:
             
             if c_min is not None and c_max is not None:  # null check 추가
                 if col_type in [pl.Int64, pl.Int32, pl.Int16, pl.Int8]:
-                    if c_min > np.iinfo(np.int8).min and c_max < np.iinfo(np.int8).max: # noqa: E501
+                    if c_min > np.iinfo(np.int8).min and c_max < np.iinfo(np.int8).max: # noqa: E501 
                         df = df.with_columns(pl.col(col).cast(pl.Int8))
                     elif c_min > np.iinfo(np.int16).min and c_max < np.iinfo(np.int16).max:  # noqa: E501
                         df = df.with_columns(pl.col(col).cast(pl.Int16))

@@ -42,7 +42,7 @@ class ModelConfig:
 @dataclass
 class Config:
     # Model
-    model: ModelConfig = ModelConfig()
+    model: ModelConfig = field(default_factory=ModelConfig)
     # Paths
     model_path: str = f"{MODEL_PATH}/pipeline.pkl"
     dataset_name: str = "jane-street-model"
