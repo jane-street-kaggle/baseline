@@ -1,6 +1,6 @@
+import gc
 from typing import Callable, Dict, List, Optional, Tuple
 
-import gc
 import numpy as np
 import polars as pl
 

@@ -1,6 +1,6 @@
 import numpy as np
-import polars as pl
 import pandas as pd
+import polars as pl
 
 from config import Config
 from constant import IS_KAGGLE

@@ -1,10 +1,12 @@
 # noqa
-from typing import Dict, List, Tuple
-from matplotlib import pyplot as plt
-import numpy as np
-from sklearn.model_selection import KFold, TimeSeriesSplit
 from abc import ABC, abstractmethod
+from typing import Dict, List, Tuple
+
+import numpy as np
 import polars as pl
+from matplotlib import pyplot as plt
+from sklearn.model_selection import KFold, TimeSeriesSplit
+
 
 class SplitStrategy(ABC):
     """Base class for split strategies"""

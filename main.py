@@ -1,13 +1,14 @@
 import os
+
+import polars as pl
+
 from config import Config, ModelConfig
 from constant import BASE_PATH, IS_KAGGLE
 from function_wrappers import versioned_function
+from metrics import r2_metric
 from pipeline import Pipeline
 from spliter import PurgedGroupTimeSeriesSplit
 from utility import default_preprocessor, predict, run_inference_only
-from metrics import r2_metric
-import polars as pl
-
 
 INFERENCE_ONLY = False  # True: inference만 실행, False: 학습 포함
 OPTIMIZE_HYPERPARAMS = False  # True: 하이퍼파라미터 최적화 실행
@@ -16,7 +17,9 @@ BASE_DATASET_NAME = "jane-street-model-v3"  # Base dataset name
 DATASET_NAME = f"{BASE_DATASET_NAME}" if IS_KAGGLE else f"{NICKNAME}/{BASE_DATASET_NAME}"
 
 import gc
+
 import numpy as np
+
 
 @versioned_function("1.1.0", "Added time-based features and symbol_id processing")
 def default_feature_generator(df: pl.DataFrame) -> pl.DataFrame:

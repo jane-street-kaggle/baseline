@@ -1,5 +1,6 @@
 from functools import wraps
-from typing import Callable, Any
+from typing import Any, Callable
+
 
 class VersionedCallable:
     version: str

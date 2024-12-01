@@ -1,6 +1,7 @@
 from typing import Any, Dict, Tuple
-import optuna
+
 import numpy as np
+import optuna
 
 from config import Config
 
