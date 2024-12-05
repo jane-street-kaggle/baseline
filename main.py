@@ -150,8 +150,8 @@ else:
             raw_test_data = pipeline.data_handler.test_data
             test_data = pipeline.data_handler._process_and_generate_features(raw_test_data)
             print(f"Test data shape: {test_data.shape}")
-
-            test_pred = pipeline.predict(test_data)
+            _test_data = test_data.to_numpy()
+            test_pred = pipeline.predict(_test_data)  
             print(f"Test predictions shape: {test_pred.shape}")
             print(test_pred)
     else:
