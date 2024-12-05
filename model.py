@@ -3,15 +3,14 @@ import gc
 import os
 import warnings
 from dataclasses import dataclass, field
-from typing import (TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple,
-                    Union)
+from typing import (Optional, Tuple)
 
-import dill
+import dill # type: ignore 
 import lightgbm as lgb
 import matplotlib.pyplot as plt
 import numpy as np
 import optuna
-import pandas as pd
+import pandas as pd # type: ignore
 import polars as pl
 import torch
 import xgboost as xgb
@@ -53,8 +52,7 @@ class LightGBMModel(BaseModel):
         if self.config.custom_metrics:
             self.config.params['metric'] = list(self.config.custom_metrics.keys())
     
-    def fit(self, train_data: Tuple[np.ndarray, np.ndarray, np.ndarray], 
-           val_data: Optional[Tuple[np.ndarray, np.ndarray, np.ndarray]] = None):
+    def fit(self, train_data, val_data=None):
         train_X, train_y, train_w = train_data
         print(f"\nMemory usage before training:")
         print(f"train_X: {train_X.nbytes / 1024 / 1024 / 1024:.2f} GB")
@@ -94,7 +92,7 @@ class LightGBMModel(BaseModel):
             callbacks=callbacks
         )
     
-    def predict(self, X: np.ndarray) -> np.ndarray:
+    def predict(self, X):
         return self.model.predict(X)
 
 class XGBoostModel(BaseModel):
@@ -103,8 +101,7 @@ class XGBoostModel(BaseModel):
         if self.config.custom_metrics:
             self.config.params['custom_metric'] = list(self.config.custom_metrics.values())
     
-    def fit(self, train_data: Tuple[np.ndarray, np.ndarray, np.ndarray], 
-           val_data: Optional[Tuple[np.ndarray, np.ndarray, np.ndarray]] = None):
+    def fit(self, train_data, val_data=None):
         """Train XGBoost model"""
         train_X, train_y, train_w = train_data
         train_set = xgb.DMatrix(train_X, train_y, weight=train_w)
@@ -135,7 +132,7 @@ class XGBoostModel(BaseModel):
             del val_set
         gc.collect()
     
-    def predict(self, X: np.ndarray) -> np.ndarray:
+    def predict(self, X):
         """Make predictions"""
         return self.model.predict(xgb.DMatrix(X))
 
@@ -144,8 +141,7 @@ class NeuralNetworkModel(BaseModel):
         # PyTorch/TensorFlow에서는 metrics를 모델 컴파일 시 등록
         self.metrics = list(self.config.custom_metrics.values())
     
-    def fit(self, train_data: Tuple[np.ndarray, np.ndarray], 
-           val_data: Optional[Tuple[np.ndarray, np.ndarray]] = None):
+    def fit(self, train_data, val_data=None):
         train_X, train_y = train_data
         
         # PyTorch example
@@ -167,14 +163,14 @@ class NeuralNetworkModel(BaseModel):
                 self.model.eval()
                 # ... validation implementation ...
     
-    def predict(self, X: np.ndarray) -> np.ndarray:
+    def predict(self, X):
         self.model.eval()
         with torch.no_grad():
             X_tensor = torch.FloatTensor(X)
             return self.model(X_tensor).numpy()
 
 class EnsembleModel(BaseModel):
-    def __init__(self, config: "ModelConfig", models: List[BaseModel]):
+    def __init__(self, config, models):
         super().__init__(config)
         self.models = models
     
@@ -182,12 +178,11 @@ class EnsembleModel(BaseModel):
         # 각 모델의 custom metrics는 이미 등록되어 있음
         pass
     
-    def fit(self, train_data: Tuple[np.ndarray, np.ndarray], 
-           val_data: Optional[Tuple[np.ndarray, np.ndarray]] = None):
+    def fit(self, train_data, val_data=None):
         for model in self.models:
             model.fit(train_data, val_data)
     
-    def predict(self, X: np.ndarray) -> np.ndarray:
+    def predict(self, X):
         predictions = [model.predict(X) for model in self.models]
         # Weighted average if weights are specified in config
         weights = self.config.params.get('weights', None)

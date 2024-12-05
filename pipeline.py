@@ -3,7 +3,7 @@ import gc
 import os
 from typing import Callable, Optional
 
-import dill
+import dill # type: ignore
 import numpy as np
 import polars as pl
 
@@ -78,7 +78,13 @@ class Pipeline:
             if optimize and i == 0:
                 print("Running hyperparameter optimization...")
                 optimizer = OptimizationHandler(self.config, type(fold_model))
-                best_params = optimizer.optimize(train_data, val_data, n_trials)
+                best_params = optimizer.optimize(
+                    (train_data[0], train_data[1]), # type: ignore
+                    (val_data[0], val_data[1]), # type: ignore
+                    n_trials
+                )
+                if self.config.model.params is None:
+                    raise ValueError("Model parameters are not initialized")
                 self.config.model.params.update(best_params)
                 # Recreate model with optimized parameters
                 del fold_model
@@ -87,7 +93,14 @@ class Pipeline:
             
             # Train model
             print("Training model...")
-            fold_model.fit(train_data, val_data)
+            if train_data is None:
+                raise ValueError("Training data is not provided")
+            if val_data is None:
+                raise ValueError("Validation data is not provided")
+            fold_model.fit(
+                (train_data[0], train_data[1]), # type: ignore
+                (val_data[0], val_data[1]) # type: ignore
+            )
             
             # Evaluate on validation set using R2
             val_X, val_y, val_w = val_data
@@ -111,8 +124,9 @@ class Pipeline:
             # Clear fold data
             del train_data, val_data, val_X, val_y, val_w, val_pred
             gc.collect()
-        
         # Use best model for final predictions
+        if best_model is None:
+            raise ValueError("No valid model was found during training")
         self.model = best_model
         print(f"\nBest validation score: {best_score:.4f}")
         
@@ -128,7 +142,7 @@ class Pipeline:
 
         return holdout_test_df
 
-    def predict(self, X: pl.DataFrame) -> np.ndarray:
+    def predict(self, X: np.ndarray) -> np.ndarray:
         """Make predictions"""
         print("Starting prediction...")
         print(f"Available features: {self.data_handler.features}")
@@ -407,6 +421,11 @@ class Pipeline:
             for k, v in config_dict['model']['params'].items():
                 print(f"     * {k}: {v}")
             
+            if self.data_handler.preprocessor is None:
+                raise ValueError("Preprocessor function is not defined")
+            if self.data_handler.feature_generator is None:
+                raise ValueError("Feature generator function is not defined")
+            
             print(f"\n2. Data Processing:")
             print(f"   - Preprocessor: {self.data_handler.preprocessor.__name__ if self.data_handler.preprocessor else 'None'}")
             print(f"     * Version: {saved_preprocessor_version}")
@@ -444,6 +463,10 @@ class Pipeline:
         except Exception as e:
             print(f"\nError loading pipeline: {str(e)}")
             raise
+
     def upload_to_kaggle(self, dataset_title: Optional[str] = None):
         """Upload this pipeline to Kaggle dataset"""
-        self.kaggle_handler.upload_pipeline(self, dataset_title)
+        if self.kaggle_handler is not None:
+            self.kaggle_handler.upload_pipeline(self, dataset_title)
+        else:
+            print("KaggleHandler is not initialized. Cannot upload to Kaggle.")

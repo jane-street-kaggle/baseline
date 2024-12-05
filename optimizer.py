@@ -1,4 +1,4 @@
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 import optuna
@@ -36,22 +36,34 @@ class OptimizationHandler:
         """
         return {}
     
-    def objective(self, trial: optuna.Trial, train_data: Tuple[np.ndarray, np.ndarray], 
-                 val_data: Tuple[np.ndarray, np.ndarray]) -> float:
+    def objective(
+        self, 
+        trial: optuna.Trial, 
+        train_data: Optional[Tuple[np.ndarray, np.ndarray]], 
+        val_data: Optional[Tuple[np.ndarray, np.ndarray]]
+    ) -> float:
         """Optimization objective"""
         params = self.get_search_space(trial)
+        if self.config.model.params is None:
+            raise ValueError("Model params are not defined")
         self.config.model.params.update(params)
         
         model = self.model_class(self.config.model)
         model.fit(train_data, val_data)
         
+        if val_data is None:
+            raise ValueError("Validation data is not provided")
         val_X, val_y = val_data
         predictions = model.predict(val_X)
         
         return np.mean((predictions - val_y) ** 2) ** 0.5
     
-    def optimize(self, train_data: Tuple[np.ndarray, np.ndarray], 
-                val_data: Tuple[np.ndarray, np.ndarray], n_trials: int = 100) -> Dict[str, Any]:
+    def optimize(
+        self, 
+        train_data: Optional[Tuple[np.ndarray, np.ndarray]], 
+        val_data: Optional[Tuple[np.ndarray, np.ndarray]],
+        n_trials: int = 100
+    ) -> Dict[str, Any]:
         """Run optimization"""
         study = optuna.create_study(direction='minimize')
         objective = lambda trial: self.objective(trial, train_data, val_data)

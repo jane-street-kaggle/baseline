@@ -1,5 +1,5 @@
 import numpy as np
-import pandas as pd
+import pandas as pd # type: ignore
 import polars as pl
 
 from config import Config
@@ -22,13 +22,13 @@ def reduce_memory(df: pl.DataFrame) -> pl.DataFrame:
             
             if c_min is not None and c_max is not None:  # null check 추가
                 if col_type in [pl.Int64, pl.Int32, pl.Int16, pl.Int8]:
-                    if c_min > np.iinfo(np.int8).min and c_max < np.iinfo(np.int8).max: # noqa: E501 
+                    if c_min > np.iinfo(np.int8).min and c_max < np.iinfo(np.int8).max: # type: ignore  # noqa: E501
                         df = df.with_columns(pl.col(col).cast(pl.Int8))
-                    elif c_min > np.iinfo(np.int16).min and c_max < np.iinfo(np.int16).max:  # noqa: E501
+                    elif c_min > np.iinfo(np.int16).min and c_max < np.iinfo(np.int16).max: # type: ignore  # noqa: E501
                         df = df.with_columns(pl.col(col).cast(pl.Int16))
-                    elif c_min > np.iinfo(np.int32).min and c_max < np.iinfo(np.int32).max:  # noqa: E501
+                    elif c_min > np.iinfo(np.int32).min and c_max < np.iinfo(np.int32).max: # type: ignore  # noqa: E501
                         df = df.with_columns(pl.col(col).cast(pl.Int32))
-                    elif c_min > np.iinfo(np.int64).min and c_max < np.iinfo(np.int64).max:  # noqa: E501
+                    elif c_min > np.iinfo(np.int64).min and c_max < np.iinfo(np.int64).max: # type: ignore  # noqa: E501
                         df = df.with_columns(pl.col(col).cast(pl.Int64))
                 else:
                     if c_min > np.finfo(np.float32).min and c_max < np.finfo(np.float32).max:
@@ -63,7 +63,7 @@ def predict(pipeline: Pipeline, test: pl.DataFrame, lags: pl.DataFrame | None) -
         test = pipeline.data_handler.feature_generator(test)
 
     test_X, _, _ = pipeline.data_handler.get_feature_data(test)
-    predictions = pipeline.predict(test_X)
+    predictions = pipeline.predict(test_X) # type: ignore
     print(f"Predictions shape: {predictions.shape}")
     print(f"Predictions: {predictions}")
 

@@ -24,7 +24,7 @@ class DataHandler:
             self.test_data = pl.read_parquet(f"{BASE_PATH}/test.parquet")
             
             # Initialize date_ranges as an empty dictionary with correct typing
-            self.date_ranges: Dict[int, Tuple[int, int]] = {} # noqa 
+            self.date_ranges: Dict[int, Tuple[int, int]] = {} # type: ignore
             # Determine the partition range, defaulting to range(10) if not specified
             partition_range = self.config.partition_range or range(10)
             
@@ -52,8 +52,7 @@ class DataHandler:
             return self.date_ranges, self.test_data
             
         except Exception as e:
-            print(f"Error loading data: {e}")
-            return None, None
+            raise ValueError(f"Error loading data: {e}")
 
     def _load_partition_data_by_datarange(self, date_range: Optional[Tuple[int, int]] = None) -> Optional[pl.DataFrame]:
         """Load and return train data for specified date range"""
@@ -69,6 +68,9 @@ class DataHandler:
                 )
                 
                 # Filter by date range if specified
+                if date_range is None:
+                    raise ValueError("Date range is required")
+                    
                 start_date, end_date = date_range
                 part_df = part_df.filter(
                     (pl.col('date_id') >= start_date) & 
@@ -132,6 +134,11 @@ class DataHandler:
         if not preprocessor and not feature_generator:
             raise ValueError("Preprocessor or feature generator is required")
         try:
+            if preprocessor:
+                raise ValueError("Preprocessor is not implemented yet")
+            if feature_generator:
+                raise ValueError("Feature generator is not implemented yet")
+            
             self.preprocessor = preprocessor
             self.feature_generator = feature_generator
             
@@ -144,14 +151,14 @@ class DataHandler:
             return self._process_and_generate_features(raw_df)
                 
         except Exception as e:
-            print(f"Error in prepare_data: {e}")
-            return None
-            
+            raise ValueError(f"Error in prepare_data: {e}")
         finally:
             gc.collect()
     
-    def _get_relevant_partitions(self, date_range: Tuple[int, int]) -> List[int]:
+    def _get_relevant_partitions(self, date_range: Tuple[int, int] | None) -> List[int]:
         """Get relevant partitions for a given date range"""
+        if date_range is None:
+            raise ValueError("Date range is required")
         start_date, end_date = date_range
         relevant_partitions = []
         for partition, (min_date, max_date) in self.date_ranges.items():
@@ -168,7 +175,10 @@ class DataHandler:
             return df
         return df
     
-    def get_feature_data(self, df: pl.DataFrame) -> Tuple[np.ndarray, Optional[np.ndarray], Optional[np.ndarray]]:
+    def get_feature_data(
+        self, 
+        df: pl.DataFrame
+    ) -> Tuple[np.ndarray, Optional[np.ndarray], Optional[np.ndarray]]:
         """Extract features, target, and weights"""
         missing_features = [f for f in self.features if f not in df.columns]
         if missing_features:

@@ -5,7 +5,7 @@ from typing import Dict, List, Tuple
 import numpy as np
 import polars as pl
 from matplotlib import pyplot as plt
-from sklearn.model_selection import KFold, TimeSeriesSplit
+from sklearn.model_selection import KFold, TimeSeriesSplit # type: ignore
 
 
 class SplitStrategy(ABC):
@@ -21,7 +21,7 @@ class SplitStrategy(ABC):
         """
         pass
     
-    def get_holdout_test(self, partition_date_ranges: Dict[int, Tuple[int, int]]) -> Tuple[int, int]:
+    def get_holdout_test(self, partition_date_ranges: Dict[int, Tuple[int, int]]) -> Tuple[Tuple[int, int], Tuple[int, int]]:
         """Calculate holdout test date range based on partition date ranges
         Args:
             partition_date_ranges: Dict[int, Tuple[int, int]]: {partition_id: (min_date, max_date)}
@@ -29,7 +29,7 @@ class SplitStrategy(ABC):
             Tuple[Tuple[int, int], Tuple[int, int]]: ((train_start_date, train_end_date), (test_start_date, test_end_date))
         """
         # Get all unique dates from partition ranges
-        all_dates = set() # noqa
+        all_dates: set[int] = set()  # noqa
         for _, (min_date, max_date) in partition_date_ranges.items():
             all_dates.update(range(min_date, max_date + 1))
         
@@ -169,9 +169,9 @@ class TimeSeriesKFold(SplitStrategy):
 
 class PurgedGroupTimeSeriesSplit(SplitStrategy):
     def __init__(self, n_splits: int = 5, 
-                 max_train_group_size: int = np.inf,
-                 max_test_group_size: int = np.inf,
-                 group_gap: int = None,
+                 max_train_group_size: int = int(1e9),  # Changed from np.inf to a large integer
+                 max_test_group_size: int = int(1e9),   # Changed from np.inf to a large integer
+                 group_gap: int | None = None,
                  test_ratio: float = 0.2):
         super().__init__(test_ratio)
         self.n_splits = n_splits

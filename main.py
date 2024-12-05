@@ -9,6 +9,7 @@ from metrics import r2_metric
 from pipeline import Pipeline
 from spliter import PurgedGroupTimeSeriesSplit
 from utility import default_preprocessor, predict, run_inference_only
+import numpy as np
 
 INFERENCE_ONLY = False  # True: inference만 실행, False: 학습 포함
 OPTIMIZE_HYPERPARAMS = False  # True: 하이퍼파라미터 최적화 실행
@@ -16,9 +17,6 @@ NICKNAME = "alvinlee9"  # Kaggle nickname
 BASE_DATASET_NAME = "jane-street-model-v3"  # Base dataset name
 DATASET_NAME = f"{BASE_DATASET_NAME}" if IS_KAGGLE else f"{NICKNAME}/{BASE_DATASET_NAME}"
 
-import gc
-
-import numpy as np
 
 
 @versioned_function("1.1.0", "Added time-based features and symbol_id processing")
@@ -166,7 +164,7 @@ else:
         )
 
 if IS_KAGGLE:
-    import kaggle_evaluation.jane_street_inference_server
+    import kaggle_evaluation.jane_street_inference_server # type: ignore
 
     if not 'pipeline' in globals():  # pipeline이 아직 정의되지 않은 경우  # noqa: E713
         # Inference only mode로 가정하고 모델 로드

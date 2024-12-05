@@ -41,15 +41,13 @@ class ModelConfig:
 
 @dataclass
 class Config:
-    # Model
     model: ModelConfig = field(default_factory=ModelConfig)
-    # Paths
     model_path: str = f"{MODEL_PATH}/pipeline.pkl"
     dataset_name: str = "jane-street-model"
-    # Data loading
     partition_range: Optional[List[int]] = None
-    # Training
-    split_strategy: SplitStrategy = field(default_factory=lambda: TimeBasedSplit(train_ratio=0.75, test_ratio=0.2))
+    split_strategy: SplitStrategy = field(
+        default_factory=lambda: TimeBasedSplit(train_ratio=0.75, test_ratio=0.2)
+    )
     seed: int = 42
     
     def __post_init__(self):
