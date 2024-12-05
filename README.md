@@ -1,11 +1,14 @@
 # Setup
 ```bash
-micromamba create --name myenv python=3.12 -c conda-forge
-micromamba activate myenv
+micromamba create --name kaggle python=3.11 -c conda-forge
+micromamba activate kaggle 
 micromamba config append channels conda-forge
 micromamba config append channels torch 
+# macos
 micromamba install pytorch::pytorch torchvision torchaudio -c pytorch
-micromamba install polars numpy xgboost lightgbm dill matplotlib optuna -c conda-forge
+# linux-cuda 12.4
+micromamba install pytorch torchvision torchaudio pytorch-cuda=12.4 -c pytorch -c nvidia
+micromamba install polars numpy xgboost lightgbm dill matplotlib optuna kaggle pandas pyarrow fastparquet -c conda-forge
 
 
 ```
